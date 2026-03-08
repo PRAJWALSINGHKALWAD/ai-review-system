@@ -1,0 +1,116 @@
+:root {
+  font-family: Segoe UI, Arial, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+  background: #f5f7fa;
+  color: #1f2937;
+}
+
+main {
+  max-width: 760px;
+  margin: 2rem auto;
+  padding: 1rem;
+}
+
+section {
+  background: #ffffff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+label {
+  display: block;
+  margin-top: 0.75rem;
+  margin-bottom: 0.3rem;
+  font-weight: 600;
+}
+
+textarea,
+select,
+button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: 1px solid #9ca3af;
+  font: inherit;
+}
+
+button {
+  cursor: pointer;
+  background: #2563eb;
+  color: white;
+  border: none;
+  margin-top: 0.8rem;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.actions {
+  display: grid;
+  gap: 0.5rem;
+  grid-template-columns: 1fr 1fr;
+}
+
+.revision-box {
+  margin-top: 1rem;
+}
+
+.latest-card {
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0.75rem;
+  background: #f8fafc;
+}
+
+.latest-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+}
+
+.copy-inline {
+  width: auto;
+  margin-top: 0;
+  padding: 0.35rem 0.7rem;
+  background: #0f766e;
+  border-radius: 999px;
+  font-size: 0.9rem;
+}
+
+.history {
+  margin-top: 1rem;
+}
+
+.history-item {
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-top: 0.6rem;
+  background: #f9fafb;
+}
+
+.copy-msg {
+  color: #1d4ed8;
+  font-weight: 600;
+  margin-top: 0.4rem;
+}
+
+.success {
+  color: #166534;
+  font-weight: 600;
+}
+
+.error {
+  color: #b91c1c;
+  font-weight: 600;
+}

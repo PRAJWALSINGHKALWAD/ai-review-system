@@ -9,6 +9,30 @@ import schemas
 router = APIRouter()
 
 
+@router.get("/responses/{review_id}", response_model=list[schemas.ResponseVersionOutput])
+def list_response_versions(review_id: int, db: Session = Depends(database.get_db)):
+    review = db.query(models.Review).filter(models.Review.id == review_id).first()
+    if not review:
+        raise HTTPException(status_code=404, detail="Review not found")
+
+    rows = (
+        db.query(models.Response)
+        .filter(models.Response.review_id == review_id)
+        .order_by(models.Response.version.asc())
+        .all()
+    )
+
+    return [
+        schemas.ResponseVersionOutput(
+            response_id=row.id,
+            version=row.version,
+            response_text=row.response_text,
+            revision_notes=row.revision_notes,
+        )
+        for row in rows
+    ]
+
+
 @router.post("/review", response_model=schemas.ReviewCreateResponse)
 def create_review(review_in: schemas.ReviewCreate, db: Session = Depends(database.get_db)):
     review = models.Review(
@@ -34,15 +58,30 @@ def generate_response(review_id: int, db: Session = Depends(database.get_db)):
         .order_by(models.Response.version.desc())
         .first()
     )
-    next_version = 1 if latest_response is None else latest_response.version + 1
 
-    response_text = ai_service.generate_response(review.review_text, review.tone)
+    # Initial generation should create version 1 once.
+    # Repeated calls return the latest generated response for this review.
+    if latest_response is not None:
+        return schemas.GenerateResponseOutput(
+            review_id=review.id,
+            response_id=latest_response.id,
+            version=latest_response.version,
+            response_text=latest_response.response_text,
+        )
+
+    generated = ai_service.generate_structured_response(
+        review=review.review_text,
+        tone=review.tone,
+        next_version=1,
+        previous_versions=[],
+        owner_improvement="",
+    )
 
     response_row = models.Response(
         review_id=review.id,
-        response_text=response_text,
+        response_text=generated["business_post"],
         revision_notes=None,
-        version=next_version,
+        version=1,
     )
     review.status = "pending"
     db.add(response_row)
@@ -96,18 +135,34 @@ def request_revision(payload: schemas.RevisionRequestInput, db: Session = Depend
     if not latest_response:
         raise HTTPException(status_code=400, detail="No generated response found to revise")
 
-    revised_text = ai_service.revise_response(
+    history_rows = (
+        db.query(models.Response)
+        .filter(models.Response.review_id == review.id)
+        .order_by(models.Response.version.asc())
+        .all()
+    )
+    previous_versions = [
+        {
+            "version": row.version,
+            "response_text": row.response_text,
+            "context": row.revision_notes,
+        }
+        for row in history_rows
+    ]
+
+    revised = ai_service.generate_structured_response(
         review=review.review_text,
-        previous_response=latest_response.response_text,
-        notes=payload.notes,
         tone=review.tone,
+        next_version=latest_response.version + 1,
+        previous_versions=previous_versions,
+        owner_improvement=payload.notes,
     )
 
     revised_row = models.Response(
         review_id=review.id,
-        response_text=revised_text,
+        response_text=revised["business_post"],
         revision_notes=payload.notes,
-        version=latest_response.version + 1,
+        version=revised["version"],
     )
 
     review.status = "revision_requested"

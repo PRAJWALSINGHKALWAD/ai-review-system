@@ -1,4 +1,5 @@
 from typing import Literal
+from typing import Optional
 
 from pydantic import BaseModel
 
@@ -33,3 +34,10 @@ class StatusResponse(BaseModel):
 class RevisionRequestInput(BaseModel):
     review_id: int
     notes: str
+
+
+class ResponseVersionOutput(BaseModel):
+    response_id: int
+    version: int
+    response_text: str
+    revision_notes: Optional[str] = None
